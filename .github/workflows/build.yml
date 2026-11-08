@@ -23,7 +23,7 @@ jobs:
         run: |
           mkdir -p www adhan tools
           mv index.html sw.js www/
-          mv adhan.wav adhan/
+          mv adhan*.wav adhan/
           mv make_icons.py tools/
 
       - name: Install dependencies
@@ -48,12 +48,14 @@ jobs:
           APP=android/app/src/main
           # adhan sound
           mkdir -p $APP/res/raw
-          cp adhan/adhan.wav $APP/res/raw/adhan.wav
+          cp adhan/*.wav $APP/res/raw/
           # permissions (location for auto city, exact alarms for adhan on time)
           sed -i 's#</manifest>#    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />\n    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />\n    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />\n</manifest>#' $APP/AndroidManifest.xml
           # app icon from icon-512.png
           pip install pillow
-          python3 tools/make_icons.py www/icon-512.png $APP/res
+          ICON=www/icon-512.png
+          if [ -f app-icon.png ]; then ICON=app-icon.png; fi
+          python3 tools/make_icons.py $ICON $APP/res
 
       - name: Sync web files into Android
         run: npx cap sync android
