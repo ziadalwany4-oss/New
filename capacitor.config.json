@@ -1,0 +1,8 @@
+{
+  "appId": "com.ziadalwany.hisn",
+  "appName": "حصن المسلم",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}
