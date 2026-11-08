@@ -1,0 +1,71 @@
+name: Build APK
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Arrange files
+        run: |
+          mkdir -p www adhan tools
+          mv index.html sw.js www/
+          mv adhan.wav adhan/
+          mv make_icons.py tools/
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Get manifest and icons if missing
+        run: |
+          cd www
+          for f in manifest.json icon-192.png icon-512.png; do
+            if [ ! -f "$f" ]; then
+              echo "Downloading $f from the website"
+              curl -fsSL "https://ziadalwany4-oss.github.io/ESLAMC/$f" -o "$f"
+            fi
+          done
+          ls -la
+
+      - name: Add Android project
+        run: npx cap add android
+
+      - name: Prepare Android (sound, permissions, icons)
+        run: |
+          APP=android/app/src/main
+          # adhan sound
+          mkdir -p $APP/res/raw
+          cp adhan/adhan.wav $APP/res/raw/adhan.wav
+          # permissions (location for auto city, exact alarms for adhan on time)
+          sed -i 's#</manifest>#    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />\n    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />\n    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />\n</manifest>#' $APP/AndroidManifest.xml
+          # app icon from icon-512.png
+          pip install pillow
+          python3 tools/make_icons.py www/icon-512.png $APP/res
+
+      - name: Sync web files into Android
+        run: npx cap sync android
+
+      - name: Build APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: hisn-adhan-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
