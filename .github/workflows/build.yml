@@ -46,12 +46,9 @@ jobs:
       - name: Prepare Android (sound, permissions, icons)
         run: |
           APP=android/app/src/main
-          # adhan sound
           mkdir -p $APP/res/raw
           cp adhan/*.wav $APP/res/raw/
-          # permissions (location for auto city, exact alarms for adhan on time)
           sed -i 's#</manifest>#    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />\n    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />\n    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />\n</manifest>#' $APP/AndroidManifest.xml
-          # app icon from icon-512.png
           pip install pillow
           ICON=www/icon-512.png
           if [ -f app-icon.png ]; then ICON=app-icon.png; fi
